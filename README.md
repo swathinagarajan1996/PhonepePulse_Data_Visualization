@@ -18,7 +18,9 @@ insights and information that can be visualized in a user-friendly manner.
 
 
 **Approach**
+
 **Step 1: Clone the Github repository **
+
 Clone the Github using scripting to fetch the data from the Phonepe pulse Github repository and store it in a suitable format such as JSON. Use the below link to clone the phonepe github repository into your local drive.
   
   "!git clone https://github.com/PhonePe/pulse.git  "
