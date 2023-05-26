@@ -19,7 +19,7 @@ insights and information that can be visualized in a user-friendly manner.
 
 **Approach**
 
-**Step 1: Clone the Github repository **
+**Step 1: Cloning Github Repository**
 
 Clone the Github using scripting to fetch the data from the Phonepe pulse Github repository and store it in a suitable format such as JSON. Use the below link to clone the phonepe github repository into your local drive.
   
@@ -83,6 +83,7 @@ df.to_csv('filename.csv',index=False)
 
 **Step 4: Database insertion**
 To insert the dataframe into sqlite3, created a new database and tables using "sqlite3" library in Python  and inserted the transformed data using SQL commands.
+
 Creating the connection between python and sqlite3
 conn=sql.connect('Pulse.db')
 mycursor=conn.cursor()
@@ -95,6 +96,7 @@ create_Table6='''CREATE TABLE Top_User( State varchar(100),
                  Pincode int, 
                  No_of_Regusers int); '''
 mycursor.execute(create_Table6)
+
 **Inserting values into tables**
 for i,row in top_users_Label6.iterrows():
     mysql='INSERT INTO Top_User (State,Year,Quarter,Pincode,No_of_Regusers)VALUES (?,?,?,?,?)
