@@ -1,7 +1,7 @@
 ![image](https://github.com/swathinagarajan1996/PhonepePulse_Data_Visualization/assets/127007232/fab1700a-8e35-4334-9bb3-aea43080bc1e)
 
-*Data Visualization and Exploration
-A User-Friendly Tool Using Streamlit and Plotly*
+***Data Visualization and Exploration
+A User-Friendly Tool Using Streamlit and Plotly***
 
 The Phonepe pulse Github repository contains a large amount of data related to
 various metrics and statistics. The goal is to extract this data and process it to obtain
@@ -88,7 +88,7 @@ Creating the connection between python and sqlite3
 conn=sql.connect('Pulse.db')
 mycursor=conn.cursor()
 
-**Creating tables: **
+**Creating tables **
 
 create_Table6='''CREATE TABLE Top_User( State varchar(100), 
                  Year int,
@@ -97,7 +97,7 @@ create_Table6='''CREATE TABLE Top_User( State varchar(100),
                  No_of_Regusers int); '''
 mycursor.execute(create_Table6)
 
-**Inserting values into tables: **
+**Inserting values into tables **
 
 for i,row in top_users_Label6.iterrows():
     mysql='INSERT INTO Top_User (State,Year,Quarter,Pincode,No_of_Regusers)VALUES (?,?,?,?,?)
