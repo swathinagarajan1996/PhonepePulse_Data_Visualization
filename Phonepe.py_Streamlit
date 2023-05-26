@@ -1,0 +1,281 @@
+import plotly.express as px
+from PIL import Image
+import pandas as pd
+import json
+import os
+import mysql.connector
+import sqlite3
+
+import streamlit as st
+conn=sqlite3.connect(r"C:\swathi\git\Pulse.db")
+mycursor = conn.cursor()
+
+
+
+logo=Image.open("C:\swathi\git\logo.png")
+st.set_page_config(page_title="Phonepe Pulse",page_icon=logo,layout='wide')
+
+Menu = ["Home","Top Charts","Explore Data"]
+choice = st.sidebar.selectbox("Menu", Menu)
+if choice == "Home":
+    #img1=Image.open('C:\swathi\git\png.jpg')
+    img1 = Image.open ('C:\swathi\git\phonpe.jpg')
+    st.image(img1)
+    st.markdown('# :violet[Data Visualization and Exploration]')
+    st.markdown("## :violet[A User-Friendly Tool Using Streamlit and Plotly]")
+    col1,col2=st.columns([2,2],gap='medium')
+
+
+    with col1:
+        st.write(" ")
+        st.write(' ')
+        st.markdown('### :green[Domain:] Fintech')
+        st.markdown('### :green[Technologies Used:]  Github Cloning, Python, Pandas, sqlite3,Streamlit, and Plotly')
+        st.markdown('### :green[Overview:]  In this streamlit web app you can visualize the phonepe pulse data and gain lot of insights on transactions, number of users, top 10 state, district, pincode and which brand has most number of users and so on. Bar charts, Pie charts and Geo map visualization are used to get some insights."')
+    with col2:
+        img2=Image.open('C:\swathi\git\img2.png')
+        st.image(img2)
+
+if choice=="Top Charts":
+    st.markdown("## :red[TopCharts]")
+    Type=st.sidebar.selectbox('**Type**',("Transcations","Users"))
+    column1,column2=st.columns([2,1.5],gap='Large')
+    with column1:
+        year=st.selectbox('**Select Year**', ('2018','2019','2020','2021','2022'),key='in_tr_yr')
+        Quarters=st.selectbox('**Select Quarter**', ('1','2','3','4'),key='in_tr_qtr')
+    with column2:
+        st.info("""
+                #### From this menu we can get insights like :
+                - Overall ranking on a particular Year and Quarter.
+                - Top 10 State, District, Pincode based on Total number of transaction and Total amount spent on phonepe.
+                - Top 10 State, District, Pincode based on Total phonepe users and their app opening frequency.
+                - Top 10 mobile brands and its percentage based on the how many people use phonepe.
+                """,icon="🔍"
+                )
+    if Type=='Transcations':
+        col1,col2,col3=st.columns([1,1,1],gap='small')
+        with col1:
+            st.markdown('### :blue[State]')
+            mycursor.execute(f"select state, sum(Transaction_Count)as Total_Transcation_Count,sum(Transaction_Amount) as Total_Transcation_Amount from Agg_Trans where Year={year} and Quarter={Quarters} group by state order by Total_Transcation_Amount desc limit 10")
+
+            df=pd.DataFrame(mycursor.fetchall(),columns=['State','Transaction_Count','Total_Amount'])
+            st.dataframe(df)
+            fig=px.pie(df,values='Total_Amount',
+                       names='State',
+                       title='Top 10',
+                       color_discrete_sequence=px.colors.sequential.Agsunset,
+                       hover_data=['Transaction_Count'],
+                       labels={'Transaction_Count':'Transaction_Count'})
+            fig.update_traces(textposition='inside',textinfo='percent+label')
+            st.plotly_chart(fig,use_container_width=True)
+
+        with col2:
+            st.markdown("### :orange[District]")
+            mycursor.execute(f"select District,sum(District_Count) as Total_count,sum(District_Amount)as Total_Amount from Map_Tran where year={year} and Quarter={Quarters} group by District order by Total_Amount desc limit 10" )
+            df=pd.DataFrame(mycursor.fetchall(),columns=['District','Transaction_Count','Total_Amount'])
+            st.dataframe(df)
+            fig=px.pie(df,values='Total_Amount',
+                        names='District',
+                        title='Top 10',
+                        color_discrete_sequence = px.colors.sequential.Agsunset,
+                        hover_data = ['Transaction_Count'],
+                        labels = {'Transaction_Count': 'Transaction_Count'})
+            fig.update_traces(textposition='inside', textinfo='percent+label')
+            st.plotly_chart(fig, use_container_width=True)
+
+        with col3:
+            st.markdown("### :violet[Pincodes]")
+            mycursor.execute(f"select Pincodes, sum(Transcation_Count) as Total_Transactions_Count, sum(Transcation_Amount) as Total_Amount from Top_trans where year = {year} and Quarter = {Quarters} group by Pincodes order by Total_Amount desc limit 10")
+            df=pd.DataFrame(mycursor.fetchall(),columns=['Pincodes','Transaction_Count','Total_Amount'])
+            st.dataframe(df)
+            fig=px.pie(df,values="Total_Amount",
+                       names="Pincodes",
+                       title="Top10",
+                       color_discrete_sequence=px.colors.sequential.Agsunset,
+                       hover_data=["Transaction_Count"],
+                       labels={"Transaction_Count": "Transaction_Count"})
+            fig.update_traces(textposition='inside', textinfo='percent+label')
+            st.plotly_chart(fig, use_container_width=True)
+
+
+    if Type=='Users':
+        col1,col2,col3,col4 = st.columns([1,1,1,1.5],gap='small')
+        with col1:
+            st.markdown('### :violet[Brands]')
+            if year==2022 and Quarters in [2,3,4]:
+                st.markdown('### sorry no data available for year 2022 in qtr 2,3,4')
+            else:
+                mycursor.execute(f"select Brand_Type, sum(Transaction_Count) as Total_Transactions_Count,(AVG(Transaction_Percentage)*100)as Avg_per from Agg_User where year={year} and Quarter={Quarters} group by Brand_Type order by Total_Transactions_Count desc limit 10")
+                df=pd.DataFrame(mycursor.fetchall(),columns=['Brand_Type','Total_Users','Avg_per'])
+                st.dataframe(df)
+                fig=px.bar(df,
+                           title="Top10",
+                           x="Total_Users",
+                           y="Brand_Type",
+                           orientation="h",
+                           color="Avg_per",
+                           color_continuous_scale=px.colors.sequential.Agsunset)
+                st.plotly_chart(fig,use_container_width=True)
+        with col2:
+            st.markdown('### :violet[District]')
+            mycursor.execute(f"SELECT District, sum(No_of_Regusers) as Total_Users,sum(No_of_AppOpen)as Total_AppOpen from Map_Users where year={year} and Quarter={Quarters} group by District order by Total_Users desc limit 10 ")
+            df=pd.DataFrame(mycursor.fetchall(),columns=['District','Total_Users','Total_AppOpen'])
+            st.dataframe(df)
+            df.Total_Users = df.Total_Users.astype(float)
+            fig=px.bar(df,title='Top 10',
+                       x='Total_Users',
+                       y='District',
+                       orientation='h',
+                       color='Total_Users',
+                       color_continuous_scale=px.colors.sequential.Agsunset)
+            st.plotly_chart(fig,use_container_width=True)
+        with col3:
+            st.markdown('### :violet[Pincode]')
+            mycursor.execute(f'SELECT Pincode, sum(No_of_Regusers) as Total_Users from Top_User where year={year} and Quarter ={Quarters} group by Pincode order by Total_Users desc limit 10')
+            df=pd.DataFrame(mycursor.fetchall(),columns=['Pincode','Total_Users'])
+            st.dataframe(df)
+            fig=px.pie(df, values='Total_Users',
+                       names='Pincode',
+                       title='Top 10',
+                       color_discrete_sequence=px.colors.sequential.Agsunset,
+                       hover_data=['Total_Users'])
+            fig.update_traces(textposition='inside',textinfo='percent+label')
+            st.plotly_chart(fig,use_container_width=True)
+
+        with col4:
+            st.markdown("### :violet[State] ")
+            mycursor.execute(f"select State, sum(No_of_Regusers)as Total_RegUsers,sum(No_of_AppOpen) as Total_AppOpen from Map_Users where year={year} and Quarter ={Quarters} group by State order by Total_RegUsers desc limit 10")
+            df=pd.DataFrame(mycursor.fetchall(),columns=['State','Total_AppOpen','Total_RegUsers'])
+            st.dataframe(df)
+            fig=px.pie(df,values='Total_AppOpen',
+                       names='State',
+                       title='Top 10',
+                       color_discrete_sequence=px.colors.sequential.Agsunset,
+                       hover_data=['Total_AppOpen'],
+                       labels={'Total_AppOpen': 'Total_AppOpen'})
+            fig.update_traces(textposition='inside', textinfo='percent+label')
+            st.plotly_chart(fig, use_container_width=True)
+
+
+if choice=="Explore Data":
+    year = st.selectbox('**Select Year**', ('2018', '2019', '2020', '2021', '2022'), key='in_tr_yr')
+    Quarters = st.selectbox('**Select Quarter**', ('1', '2', '3', '4'), key='in_tr_qtr')
+    Type = st.sidebar.selectbox('**Type**', ("Transcations", "Users"))
+    col1,col2=st.columns(2)
+
+    if Type=="Transcations":
+        with col1:
+            st.markdown("### :violet[Transaction Count According To District]")
+            selected_state=st.selectbox("** Please select state to visualize**",
+                                        ('andaman-&-nicobar-islands','andhra-pradesh','arunachal-pradesh','assam','bihar',
+                                         'chandigarh','chhattisgarh','dadra-&-nagar-haveli-&-daman-&-diu','delhi','goa','gujarat',
+                                         'haryana','himachal-pradesh','jammu-&-kashmir','jharkhand','karnataka','kerala','ladakh',
+                                         'lakshadweep','madhya-pradesh','maharashtra','manipur','meghalaya','mizoram','nagaland','odisha','puducherry',
+                                         'punjab','rajasthan','sikkim','tamil-nadu','telangana','tripura','uttar-pradesh','uttarakhand','west-bengal'),index=22,key="state_to_selectbox")
+
+            mycursor.execute(f"select State,District,Year,Quarter,sum(District_Count) as Total_count from Map_Tran where year={year}  and Quarter ={Quarters} and State='{selected_state}' group by State,District,Year,Quarter order by State,District")
+            df1= pd.DataFrame(mycursor.fetchall(),columns=["State","District","Year","Quarter","Total_count"])
+            st.dataframe(df1)
+            fig=px.bar(df1,
+                       title="Transaction Count According To District",
+                       x="District",
+                       y="Total_count",
+                       orientation='h',
+                       color="Total_count",
+                       color_continuous_scale=px.colors.sequential.Oranges)
+            st.plotly_chart(fig,use_container_width=True)
+
+            st.markdown("## :violet[Payment Type]")
+            selected_state = st.selectbox("** Please select state to visualize**",
+                                          ('andaman-&-nicobar-islands', 'andhra-pradesh', 'arunachal-pradesh', 'assam',
+                                           'bihar','chandigarh', 'chhattisgarh', 'dadra-&-nagar-haveli-&-daman-&-diu', 'delhi',
+                                           'goa', 'gujarat','haryana', 'himachal-pradesh', 'jammu-&-kashmir', 'jharkhand', 'karnataka',
+                                           'kerala', 'ladakh','lakshadweep', 'madhya-pradesh', 'maharashtra', 'manipur', 'meghalaya',
+                                           'mizoram', 'nagaland', 'odisha', 'puducherry','punjab', 'rajasthan', 'sikkim', 'tamil-nadu', 'telangana', 'tripura',
+                                           'uttar-pradesh', 'uttarakhand', 'west-bengal'),index=22,key="state_selectbox")
+
+
+            Type=st.selectbox("** Please select values to Visualize**",('Transaction_count','Transcation_amount'))
+            if Type=="Transaction_count":
+                mycursor.execute(f"Select Transaction_Type,sum(Transaction_Count)as Total_Count from Agg_Trans where year={year} and Quarter ={Quarters} group by Transaction_Type order by Transaction_Type")
+                df=pd.DataFrame(mycursor.fetchall(),columns=["Transaction_Type","Total_Count"])
+                st.dataframe(df)
+                fig=px.bar(df,
+                           title="Transaction_Type vs Total_Count",
+                           x="Transaction_Type",
+                           y="Total_Count",
+                           orientation="h",
+                           color="Transaction_Type",
+                           color_continuous_scale=px.colors.sequential.Oranges)
+                st.plotly_chart(fig,use_container_width=True)
+            if Type=="Transcation_amount":
+                mycursor.execute(f"Select Transaction_Type,sum(Transaction_Amount) as Total_Amount from Agg_Trans where year={year} and Quarter ={Quarters} group by Transaction_Type order by Transaction_Type")
+                df=pd.DataFrame(mycursor.fetchall(),columns=['Transaction_Type','Total_Amount'])
+                st.dataframe(df)
+                fig=px.bar(df,title="Transaction_Type vs Total_Amount",
+                           x='Transaction_Type',
+                           y='Total_Amount',
+                           orientation='h',
+                           color="Transaction_Type",
+                           color_continuous_scale=px.colors.sequential.Oranges)
+                st.plotly_chart(fig,use_container_width=True)
+
+            select1=st.selectbox("Select any one",["Transcation_count","Transcation_amount"])
+            st.markdown(":violet[This Geomap is used to visualize state based data according to Transcation_count and Transcation_amount ]")
+            mycursor.execute(f"select State,sum(District_Count) as Total_Count,sum(District_Amount)as Total_Amount from Map_Tran where year={year} and Quarter ={Quarters} group by State order by State")
+            df1=pd.DataFrame(mycursor.fetchall(),columns=["State","Total_Count","Total_Amount"])
+            df2 = pd.read_csv(r"C:\Users\admin\PycharmProjects\phonepe_pulse_proj2\phonepe_excel_state.csv")
+            df1.State=df2
+            if select1=="Transcation_count":
+                fig1=px.choropleth(df1,geojson="https://gist.githubusercontent.com/jbrobst/56c13bbbf9d97d187fea01ca62ea5112/raw/e388c4cae20aa53cb5090210a42ebb9b765c0a36/india_states.geojson",
+                                   featureidkey="properties.ST_NM",
+                                   locations="State",
+                                   color="Total_Count",
+                                   color_continuous_scale="Aggrnyl")
+                fig1.update_geos(fitbounds="locations",visible=False)
+                st.plotly_chart(fig1,use_container_width=True)
+            if select1=="Transcation_amount":
+                fig2 = px.choropleth(df1,
+                                     geojson="https://gist.githubusercontent.com/jbrobst/56c13bbbf9d97d187fea01ca62ea5112/raw/e388c4cae20aa53cb5090210a42ebb9b765c0a36/india_states.geojson",
+                                     featureidkey="properties.ST_NM",
+                                     locations="State",
+                                     color="Total_Amount",
+                                     color_continuous_scale="Aggrnyl")
+                fig1.update_geos(fitbounds="locations", visible=False)
+                st.plotly_chart(fig2, use_container_width=True)
+
+    if Type == "Users":
+        st.markdown("## :violet[overall state data user app opening range]")
+        mycursor.execute(f"select State, sum(No_of_Regusers)as Total_User,sum(No_of_AppOpen)as Total_AppOpen from Map_Users where year={year} and Quarter ={Quarters} group by State order by State ")
+        df1=pd.DataFrame(mycursor.fetchall(),columns=["State","Total_User","Total_AppOpen"])
+        df2=pd.read_csv(r"C:\Users\admin\PycharmProjects\phonepe_pulse_proj2\phonepe_excel_state.csv")
+        df1.Total_AppOpen=df1.Total_AppOpen.astype(float)
+        df1.State=df2
+        fig=px.choropleth(df1,
+                          geojson="https://gist.githubusercontent.com/jbrobst/56c13bbbf9d97d187fea01ca62ea5112/raw/e388c4cae20aa53cb5090210a42ebb9b765c0a36/india_states.geojson",
+                          featureidkey="properties.ST_NM",
+                          locations="State",
+                          color="Total_AppOpen",
+                          color_continuous_scale="sunset")
+        fig.update_geos(fitbounds="locations",visible=False)
+        st.plotly_chart(fig,use_container_width=True)
+
+        st.markdown("## :violet[Select any state to explore more]")
+        selected_state=st.selectbox("** Please select state to visualize**",
+                                          ('andaman-&-nicobar-islands', 'andhra-pradesh', 'arunachal-pradesh', 'assam',
+                                           'bihar','chandigarh', 'chhattisgarh', 'dadra-&-nagar-haveli-&-daman-&-diu', 'delhi',
+                                           'goa', 'gujarat','haryana', 'himachal-pradesh', 'jammu-&-kashmir', 'jharkhand', 'karnataka',
+                                           'kerala', 'ladakh','lakshadweep', 'madhya-pradesh', 'maharashtra', 'manipur', 'meghalaya',
+                                           'mizoram', 'nagaland', 'odisha', 'puducherry','punjab', 'rajasthan', 'sikkim', 'tamil-nadu', 'telangana', 'tripura',
+                                           'uttar-pradesh', 'uttarakhand', 'west-bengal'),index=22)
+        mycursor.execute(f"Select State,Year,Quarter,District,sum(No_of_Regusers)as Total_User,sum(No_of_AppOpen)as Total_AppOpen from Map_Users where year={year} and Quarter ={Quarters} and State='{selected_state}'group by State,Year,Quarter,District order by State,District")
+        df=pd.DataFrame(mycursor.fetchall(),columns=["State","Year","Quarter","District","Total_User","Total_AppOpen"])
+        df.Total_User=df.Total_User.astype(int)
+        fig=px.bar(df,title="selected_state",
+                   x="District",
+                   y="Total_User",
+                   orientation='v',
+                   color="Total_User",
+                   color_continuous_scale=px.colors.sequential.Agsunset)
+        st.plotly_chart(fig, use_container_width=True)
+
