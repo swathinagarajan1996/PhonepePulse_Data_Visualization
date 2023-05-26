@@ -25,7 +25,7 @@ Clone the Github using scripting to fetch the data from the Phonepe pulse Github
   
   "!git clone https://github.com/PhonePe/pulse.git  "
   
-**Step 2: Importing the Libraries **
+**Step 2: Importing the Libraries:**
     import pandas as pd
     import sqlite3 as sql
     import streamlit as st
@@ -34,7 +34,7 @@ Clone the Github using scripting to fetch the data from the Phonepe pulse Github
     import json
     from PIL import Image
 
-**** Step 3: Data transformation:****
+**Step 3:Data transformation:**
 After cloning, in this step the JSON files that are available in the folders are converted into the readeable and understandable DataFrame format by using the for loop and iterating file by file and then finally the DataFrame is created. In order to perform this step used os, json and pandas packages. And finally converted the dataframe into CSV file and storing in the local drive.
 
 path1='Path of the JSON files'
@@ -101,6 +101,7 @@ for i,row in top_users_Label6.iterrows():
     val=(row['State'],row['Year'],row['Quarter'],row['Pincode'],row['No_of_Regusers'])
     mycursor.execute(mysql,val)
 conn.commit()
+
 
 **Step 5:Dashboard creation**
 To create colourful and insightful dashboard I've used Plotly libraries in Python to create an interactive and visually appealing dashboard. Plotly's built-in Pie, Bar, Geo map functions are used to display the data on a charts and map and Streamlit is used to create a user-friendly interface with multiple dropdown options for users to select different facts and figures to display.
